@@ -1,6 +1,6 @@
 {
 	"name": "@eightshift/frontend-libs-compat",
-	"version": "1.0.0",
+	"version": "4.0.0",
 	"description": "A small set of functions to preserve compatibility in projects using older Frontend Libs versions, while allowing new versions of Frontend Libs to be used alongside.",
 	"author": {
 		"name": "Eightshift team",

@@ -13,6 +13,6 @@ This projects adheres to [Semantic Versioning](https://semver.org/) and [Keep a 
 
 Initial release.
 
-[Unreleased]: https://github.com/infinum/eightshift-frontend-libs-comapt/compare/master...HEAD
+[Unreleased]: https://github.com/infinum/eightshift-frontend-libs-compat/compare/master...HEAD
 
-[4.0.1]: https://github.com/infinum/eightshift-frontend-libs-comapt/compare/4.0.0...4.0.1
+[4.0.1]: https://github.com/infinum/eightshift-frontend-libs-compat/compare/4.0.0...4.0.1

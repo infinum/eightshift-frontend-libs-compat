@@ -3,6 +3,7 @@ vendor
 composer.lock
 package-lock.json
 /docs
+.DS_Store
 
 # Used for tests.
 /temp

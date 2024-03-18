@@ -1,6 +1,6 @@
 {
 	"name": "@eightshift/frontend-libs-compat",
-	"version": "4.0.2",
+	"version": "4.0.3",
 	"description": "A small set of functions to preserve compatibility in projects using older Frontend Libs versions, while allowing new versions of Frontend Libs to be used alongside.",
 	"author": {
 		"name": "Eightshift team",
@@ -29,16 +29,15 @@
 	"homepage": "https://github.com/infinum/eightshift-frontend-libs-compat#readme",
 	"license": "MIT",
 	"dependencies": {
-		"@wordpress/block-editor": "12.18.2",
-		"@wordpress/blocks": "^12.27.1",
-		"@wordpress/element": "^5.27.0",
+		"@wordpress/block-editor": "12.21.0",
+		"@wordpress/blocks": "^12.30.0",
+		"@wordpress/element": "^5.30.0",
 		"just-camel-case": "^6.2.0",
 		"just-debounce-it": "^3.2.0",
 		"just-has": "^2.3.0",
 		"just-is-empty": "^3.4.1",
 		"just-kebab-case": "^4.2.0",
-		"just-throttle": "^4.2.0",
-		"react-html-parser": "^2.0.2"
+		"just-throttle": "^4.2.0"
 	},
 	"sideEffects": false
 }

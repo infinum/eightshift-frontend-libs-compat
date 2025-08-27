@@ -36,7 +36,7 @@ Initial release.
 
 [Unreleased]: https://github.com/infinum/eightshift-frontend-libs-compat/compare/master...HEAD
 
-[4.0.4]: https://github.com/infinum/eightshift-frontend-libs-compat/compare/4.0.4...5.0.0
+[5.0.0]: https://github.com/infinum/eightshift-frontend-libs-compat/compare/4.0.4...5.0.0
 [4.0.4]: https://github.com/infinum/eightshift-frontend-libs-compat/compare/4.0.3...4.0.4
 [4.0.3]: https://github.com/infinum/eightshift-frontend-libs-compat/compare/4.0.2...4.0.3
 [4.0.2]: https://github.com/infinum/eightshift-frontend-libs-compat/compare/4.0.1...4.0.2

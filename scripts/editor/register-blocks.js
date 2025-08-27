@@ -4,6 +4,7 @@ import { registerBlockType, registerBlockVariation } from '@wordpress/blocks';
 import { InnerBlocks } from '@wordpress/block-editor';
 import { createElement } from '@wordpress/element';
 import { blockIcons } from '../helpers/block-icons';
+import { camelCase, lowerFirst, upperFirst } from '../helpers';
 
 /**
  * Filter array of JS paths and get the correct edit components.
@@ -270,43 +271,57 @@ export const getSharedAttributes = (globalManifest, blockManifest) => {
 };
 
 /**
- * Iterate over component object in block manifest and search and replace the component attributes with new one.
- * Search and replace the component attributes with new one.
+ * Iterate over attributes or example attributes object in block/component manifest and append the parent prefixes.
  *
- * @param {object} component         - Object of component manifests to iterate.
- * @param {string} realComponentName - React component name defined in the component manifest.
- * @param {string} newComponentName  - New component name to search and replace the original.
- * @param {string} [key=attributes]  - Type of output, can be: `attributes` or `example`.
+ * @param {object} manifest                   - Object of component/block manifest to get data from.
+ * @param {string} newName                    - New renamed component name.
+ * @param {string} realName                   - Original real component name.
+ * @param {boolean} [isExample=false]         - Type of items to iterate, if false example key will be use, if true attributes will be used.
+ * @param {string} [parent='']                - Parent component key with stacked parent component names for the final output.
+ * @param {boolean} [currentAttributes=false] - Check if current attribute is a part of the current component.
+ *
+ * @access private
  *
  * @returns {object}
  */
-export const prepareComponentAttribute = (component, realComponentName, newComponentName, key = 'attributes') => {
-	let output = {};
+export const prepareComponentAttribute = (manifest, newName, realName, isExample = false, parent = '', currentAttributes = false) => {
+	const output = {};
 
-	let componentAttributes = {};
+	// Define different data point for attributes or example.
+	const componentAttributes = isExample ? manifest?.example?.attributes : manifest?.attributes;
 
-	// Define different data point for attributes.
-	if (key === 'attributes') {
-		componentAttributes = component.attributes;
+	// It can occur that attributes or example key is missing in manifest so bailout.
+	if (typeof componentAttributes === 'undefined') {
+		return output;
 	}
 
-	// Define different data point for example.
-	if (key === 'example') {
-		componentAttributes = component.example.attributes;
-	}
+	// Prepare parent case.
+	const newParent = camelCase(parent);
 
-	// Check if realComponentName and newComponentName are not the same. If so do the replace of the attribute names.
-	if (realComponentName !== newComponentName) {
+	// Iterate each attribute and attach parent prefixes.
+	for (const [componentAttribute] of Object.entries(componentAttributes)) {
+		let attribute = componentAttribute;
 
-		// Loop attributes that need replacing.
-		for (const [componentAttribute] of Object.entries(componentAttributes)) {
-			const newName = componentAttribute.replace(realComponentName, newComponentName);
-
-			// Output attributes with the new name.
-			output[newName] = componentAttributes[componentAttribute];
+		// If there is a attribute name switch use the new one.
+		if (newName !== realName) {
+			attribute = componentAttribute.replace(realName, newName);
 		}
-	} else {
-		output = componentAttributes;
+
+		// Check if current attribute is used strip component prefix from attribute and replace it with parent prefix.
+		if (currentAttributes) {
+			attribute = componentAttribute.replace(`${lowerFirst(camelCase(realName))}`, '');
+		}
+
+		// Wrapper attributes that should not be modified.
+		const isWrapperAttribute = attribute.startsWith('wrapper') || attribute.startsWith('showWrapper');
+
+		let attributeName = newParent === '' ? attribute : `${newParent}${upperFirst(attribute)}`;
+
+		// Determine if parent is empty and if parent name is the same as component/block name and skip wrapper attributes.
+		let newAttributeName = isWrapperAttribute ? attribute : attributeName;
+
+		// Output new attribute names.
+		output[newAttributeName] = componentAttributes[componentAttribute];
 	}
 
 	return output;
@@ -320,11 +335,11 @@ export const prepareComponentAttribute = (component, realComponentName, newCompo
  * @param {object} blockManifest                   - Object of blocks manifests to iterate.
  * @param {string} blockName                       - Full block name.
  * @param {string} [key=attributes]                - Type of output, can be: `attributes` or `example`.
- * @param {string} [parentAttributeName=undefined] - Parent component attribute from which to determine if the name has changed in the parent component.
+ * @param {string} [parentAttributeName=''] - Parent component attribute from which to determine if the name has changed in the parent component.
  *
  * @returns {object}
  */
-export const prepareComponentAttributes = (componentsManifest, blockManifest, blockName, key = 'attributes', parentAttributeName = undefined) => {
+export const prepareComponentAttributes = (componentsManifest, blockManifest, blockName, key = 'attributes', parentAttributeName = '') => {
 	let output = {};
 
 	const {
@@ -335,6 +350,11 @@ export const prepareComponentAttributes = (componentsManifest, blockManifest, bl
 
 	// Get global window data.
 	const globalData = window['eightshift'][process.env.VERSION].dependency;
+
+	// Determine if this is component or block and provide the name, not used for anything important but only to output the error msg.
+	const name = camelCase(blockManifest?.blockName ?? blockManifest?.componentName);
+
+	const newParent = camelCase(parentAttributeName);
 
 	// Loop component.
 	for (let [newComponentName, realComponentName] of Object.entries(components)) {
@@ -351,27 +371,34 @@ export const prepareComponentAttributes = (componentsManifest, blockManifest, bl
 
 		// If component has more components do recursive loop.
 		if (Object.prototype.hasOwnProperty.call(component, 'components')) {
-			outputAttributes = prepareComponentAttributes(componentsManifest, component, blockName, key, newComponentName);
+			outputAttributes = prepareComponentAttributes(
+				componentsManifest,
+				component,
+				newComponentName,
+				key,
+				newParent !== '' ? `${newParent}${upperFirst(camelCase(newComponentName))}` : lowerFirst(camelCase(newComponentName)),
+			);
 		} else {
 
-			// Use parent attribute name to determine if the name has changed in the parent component.
-			if (parentAttributeName !== newComponentName &&
-				realComponentName !== newComponentName &&
-				Object.prototype.hasOwnProperty.call(globalData.components, newComponentName)
-			) {
-				newComponentName = parentAttributeName;
-			}
-
-			// Output the component attributes.
-			outputAttributes = prepareComponentAttribute(component, realComponentName, newComponentName, key);
+			// Output the component attributes if there is no nesting left, and append the parent prefixes.
+			outputAttributes = prepareComponentAttribute(
+				component,
+				newComponentName,
+				realComponentName,
+				key === 'example',
+				newParent
+			);
 		}
 
-		output = {
+		// Populate the output recursively.
+		Object.assign(output, {
 			...output,
 			...outputAttributes,
-			...(key === 'attributes' ? attributes : example.attributes),
-		};
+		});
 	}
+
+	// Add the current block/component attributes to the output.
+	Object.assign(output, prepareComponentAttribute(blockManifest, '', name, key === 'example', newParent, true));
 
 	return output;
 };
@@ -397,13 +424,14 @@ export const getAttributes = (globalManifest, wrapperManifest, componentsManifes
 
 	const {
 		attributes = {},
+		blockName,
 	} = blockManifest;
 
 	return {
 		...getSharedAttributes(globalManifest, blockManifest),
 		...((typeof attributesGlobal === 'undefined') ? {} : attributesGlobal),
 		...((typeof attributesWrapper === 'undefined') ? {} : attributesWrapper),
-		...prepareComponentAttributes(componentsManifest, blockManifest, getFullBlockName(globalManifest, blockManifest)),
+		...prepareComponentAttributes(componentsManifest, blockManifest, getFullBlockName(globalManifest, blockManifest), 'attributes'),
 		...attributes,
 	};
 };
